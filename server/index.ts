@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 
 const distPath = path.join(process.cwd(), "dist", "public");
-app.use(express.static(distPath));
+app.use(express.static(distPath, { index: false }));
 
 registerRoutes(null, app).then((server) => {
   app.get("/{*path}", (_req, res) => {
