@@ -58,10 +58,10 @@ async function initTables() {
     CREATE TABLE IF NOT EXISTS recommendations (
       id INTEGER PRIMARY KEY,
       type TEXT, cycle TEXT, sphere TEXT, proposal TEXT,
-      responsible TEXT, responsible_all TEXT,
-      stakeholders TEXT, completion_form TEXT,
-      deadline TEXT, status TEXT, position_2024 TEXT,
-      position_2026 TEXT, adgs_position TEXT, case_note TEXT
+      responsible TEXT, "responsibleAll" TEXT,
+      stakeholders TEXT, "completionForm" TEXT,
+      deadline TEXT, status TEXT, position2024 TEXT,
+      position2026 TEXT, "adgsPosition" TEXT, "caseNote" TEXT
     );
     CREATE TABLE IF NOT EXISTS status_history (
       id SERIAL PRIMARY KEY,
@@ -92,7 +92,7 @@ export const storage = {
     if (filters.sphere) { conditions.push(`sphere = $${i++}`); params.push(filters.sphere); }
     if (filters.type) { conditions.push(`type = $${i++}`); params.push(filters.type); }
     if (filters.responsible) {
-      conditions.push(`(responsible ILIKE $${i} OR responsible_all ILIKE $${i})`);
+      conditions.push(`(responsible ILIKE $${i} OR "responsibleAll" ILIKE $${i})`);
       params.push(`%${filters.responsible}%`); i++;
     }
     if (filters.search) {
@@ -116,19 +116,19 @@ export const storage = {
       await client.query('BEGIN');
       for (const r of rows) {
         await client.query(`
-          INSERT INTO recommendations (id,type,cycle,sphere,proposal,responsible,responsible_all,stakeholders,completion_form,deadline,status,position_2024,position_2026,adgs_position,case_note)
+          INSERT INTO recommendations (id,type,cycle,sphere,proposal,responsible,"responsibleAll",stakeholders,"completionForm",deadline,status,position2024,position2026,"adgsPosition","caseNote")
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
           ON CONFLICT (id) DO UPDATE SET
             type=EXCLUDED.type, cycle=EXCLUDED.cycle, sphere=EXCLUDED.sphere,
             proposal=EXCLUDED.proposal, responsible=EXCLUDED.responsible,
-            responsible_all=EXCLUDED.responsible_all, stakeholders=EXCLUDED.stakeholders,
-            completion_form=EXCLUDED.completion_form, deadline=EXCLUDED.deadline,
-            status=EXCLUDED.status, position_2024=EXCLUDED.position_2024,
-            position_2026=EXCLUDED.position_2026, adgs_position=EXCLUDED.adgs_position,
-            case_note=EXCLUDED.case_note
-        `, [r.id, r.type, r.cycle, r.sphere, r.proposal, r.responsible, r.responsible_all,
-            r.stakeholders, r.completion_form, r.deadline, r.status, r.position_2024,
-            r.position_2026, r.adgs_position, r.case_note]);
+            "responsibleAll"=EXCLUDED."responsibleAll", stakeholders=EXCLUDED.stakeholders,
+            "completionForm"=EXCLUDED."completionForm", deadline=EXCLUDED.deadline,
+            status=EXCLUDED.status, position2024=EXCLUDED.position2024,
+            position2026=EXCLUDED.position2026, "adgsPosition"=EXCLUDED."adgsPosition",
+            "caseNote"=EXCLUDED."caseNote"
+        `, [r.id, r.type, r.cycle, r.sphere, r.proposal, r.responsible, r.responsibleAll,
+            r.stakeholders, r.completionForm, r.deadline, r.status, r.position2024,
+            r.position2026, r.adgsPosition, r.caseNote]);
       }
       await client.query('COMMIT');
     } catch (e) {
@@ -147,13 +147,13 @@ export const storage = {
       INSERT INTO status_history ("recommendationId","oldStatus","newStatus","oldDeadline","newDeadline","oldPosition2026","newPosition2026","changedBy","changedAt",comment)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
     `, [id, old.status, payload.status, old.deadline, payload.deadline ?? old.deadline,
-        old.position_2026, payload.position_2026 ?? old.position_2026,
+        old.position2026, payload.position2026 ?? old.position2026,
         payload.changedBy ?? 'Аноним', new Date().toLocaleString('ru-RU'), payload.comment]);
 
     await pool.query(`
-      UPDATE recommendations SET status=$1, deadline=$2, position_2026=$3, adgs_position=$4 WHERE id=$5
+      UPDATE recommendations SET status=$1, deadline=$2, position2026=$3, "adgsPosition"=$4 WHERE id=$5
     `, [payload.status, payload.deadline ?? old.deadline,
-        payload.position_2026 ?? old.position_2026,
+        payload.position2026 ?? old.position2026,
         payload.adgsPosition ?? old.adgsPosition, id]);
 
     return this.getById(id);
@@ -195,8 +195,8 @@ export const storage = {
       }
 
       let primaryExec = r.responsible?.trim() || '';
-      if (r.responsible_all) {
-        try { primaryExec = JSON.parse(r.responsible_all)[0] || primaryExec; } catch {}
+      if (r.responsibleAll) {
+        try { primaryExec = JSON.parse(r.responsibleAll)[0] || primaryExec; } catch {}
       }
       if (primaryExec) {
         if (!execMap[primaryExec]) execMap[primaryExec] = { count: 0, done: 0 };
@@ -215,7 +215,7 @@ export const storage = {
       if (typeNorm === 'анализ') { cycleMap[c].totalAnalysis++; if (s === 'Исполнено') cycleMap[c].doneAnalysis++; }
       else if (typeNorm === 'мониторинг') { cycleMap[c].totalMonitoring++; if (s === 'Исполнено') cycleMap[c].doneMonitoring++; }
 
-      const form = normalizeForm(r.completion_form);
+      const form = normalizeForm(r.completionForm);
       if (!formMap[form]) formMap[form] = { total: 0, done: 0 };
       formMap[form].total++;
       if (s === 'Исполнено') formMap[form].done++;
@@ -250,7 +250,7 @@ export const storage = {
       if (!liveSet.has(r.cycle)) continue;
       const s = r.status || 'Не указано';
       let exec = r.responsible?.trim() || '';
-      if (r.responsible_all) { try { exec = JSON.parse(r.responsible_all)[0] || exec; } catch {} }
+      if (r.responsibleAll) { try { exec = JSON.parse(r.responsibleAll)[0] || exec; } catch {} }
       if (!exec) continue;
       if (!liveExecMap[exec]) liveExecMap[exec] = { count: 0, done: 0, cycles: new Set() };
       liveExecMap[exec].count++;
