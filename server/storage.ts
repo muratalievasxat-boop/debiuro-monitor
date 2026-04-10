@@ -234,6 +234,34 @@ export const storage = {
     const byForm = Object.entries(formMap).sort((a,b) => b[1].total - a[1].total).map(([form,v]) => ({ form, ...v }));
     const overdueByExec = Object.entries(overdueExecMap).sort((a,b) => b[1]-a[1]).slice(0,10).map(([responsible,count]) => ({ responsible, count }));
 
-    return { total, byStatus, byCycle, bySphere, byExec, byType, byForm, overdue: overdueCount, overdueByExec };
+    // needsAttention: execs with 0% done and >= 5 recs (all cycles)
+    const needsAttention = Object.entries(execMap)
+      .filter(([_, v]) => v.count >= 5 && v.done === 0)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([responsible, v]) => ({ responsible, count: v.count, done: v.done }));
+
+    // liveCycles: cycles with noStatus > 0 (active/live)
+    const liveCycles = ['I','II','III','IV','V','VI','VII'].filter(c => cycleMap[c] && cycleMap[c].noStatus > 0);
+
+    // needsAttentionLive: execs with 0% done in live cycles
+    const liveSet = new Set(liveCycles);
+    const liveExecMap: Record<string, { count: number; done: number; cycles: Set<string> }> = {};
+    for (const r of all) {
+      if (!liveSet.has(r.cycle)) continue;
+      const s = r.status || 'Не указано';
+      let exec = r.responsible?.trim() || '';
+      if (r.responsible_all) { try { exec = JSON.parse(r.responsible_all)[0] || exec; } catch {} }
+      if (!exec) continue;
+      if (!liveExecMap[exec]) liveExecMap[exec] = { count: 0, done: 0, cycles: new Set() };
+      liveExecMap[exec].count++;
+      if (s === 'Исполнено') liveExecMap[exec].done++;
+      liveExecMap[exec].cycles.add(r.cycle);
+    }
+    const needsAttentionLive = Object.entries(liveExecMap)
+      .filter(([_, v]) => v.count >= 5 && v.done === 0)
+      .sort((a, b) => b[1].count - a[1].count)
+      .map(([responsible, v]) => ({ responsible, count: v.count, done: v.done, cycles: [...v.cycles] }));
+
+    return { total, byStatus, byCycle, bySphere, byExec, byType, byForm, overdue: overdueCount, overdueByExec, needsAttention, needsAttentionLive, liveCycles };
   },
 };

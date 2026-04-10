@@ -267,7 +267,28 @@ var storage = {
     const byExec = Object.entries(execMap).sort((a, b) => b[1].count - a[1].count).map(([responsible, v]) => ({ responsible, ...v }));
     const byForm = Object.entries(formMap).sort((a, b) => b[1].total - a[1].total).map(([form, v]) => ({ form, ...v }));
     const overdueByExec = Object.entries(overdueExecMap).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([responsible, count]) => ({ responsible, count }));
-    return { total, byStatus, byCycle, bySphere, byExec, byType, byForm, overdue: overdueCount, overdueByExec };
+    const needsAttention = Object.entries(execMap).filter(([_, v]) => v.count >= 5 && v.done === 0).sort((a, b) => b[1].count - a[1].count).map(([responsible, v]) => ({ responsible, count: v.count, done: v.done }));
+    const liveCycles = ["I", "II", "III", "IV", "V", "VI", "VII"].filter((c) => cycleMap[c] && cycleMap[c].noStatus > 0);
+    const liveSet = new Set(liveCycles);
+    const liveExecMap = {};
+    for (const r of all) {
+      if (!liveSet.has(r.cycle)) continue;
+      const s = r.status || "\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u043E";
+      let exec = r.responsible?.trim() || "";
+      if (r.responsible_all) {
+        try {
+          exec = JSON.parse(r.responsible_all)[0] || exec;
+        } catch {
+        }
+      }
+      if (!exec) continue;
+      if (!liveExecMap[exec]) liveExecMap[exec] = { count: 0, done: 0, cycles: /* @__PURE__ */ new Set() };
+      liveExecMap[exec].count++;
+      if (s === "\u0418\u0441\u043F\u043E\u043B\u043D\u0435\u043D\u043E") liveExecMap[exec].done++;
+      liveExecMap[exec].cycles.add(r.cycle);
+    }
+    const needsAttentionLive = Object.entries(liveExecMap).filter(([_, v]) => v.count >= 5 && v.done === 0).sort((a, b) => b[1].count - a[1].count).map(([responsible, v]) => ({ responsible, count: v.count, done: v.done, cycles: [...v.cycles] }));
+    return { total, byStatus, byCycle, bySphere, byExec, byType, byForm, overdue: overdueCount, overdueByExec, needsAttention, needsAttentionLive, liveCycles };
   }
 };
 
