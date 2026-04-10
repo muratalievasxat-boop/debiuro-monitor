@@ -1,10 +1,27 @@
 import { useEffect, useState } from "react";
 
+interface CycleStat {
+  cycle: string;
+  total: number;
+  done: number;
+  inWork: number;
+  rejected: number;
+  noStatus: number;
+}
+
+interface SphereStat {
+  sphere: string;
+  count: number;
+  done: number;
+  inWork: number;
+  rejected: number;
+}
+
 interface Stats {
   total: number;
   byStatus: Record<string, number>;
-  bySphere: Record<string, number>;
-  byCycle: Record<string, number>;
+  byCycle: CycleStat[];
+  bySphere: SphereStat[];
 }
 
 export default function Dashboard() {
@@ -18,48 +35,90 @@ export default function Dashboard() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="grid grid-cols-2 gap-4">{[...Array(6)].map((_, i) => <div key={i} className="h-24 rounded-xl bg-blue-50 dark:bg-gray-800 animate-pulse" />)}</div>;
+  if (loading) return (
+    <div className="grid grid-cols-2 gap-4">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="h-24 rounded-xl bg-blue-50 dark:bg-gray-800 animate-pulse" />
+      ))}
+    </div>
+  );
   if (!stats) return <div className="text-red-500">Ошибка загрузки данных</div>;
 
-  const cards = [
-    { label: "Всего записей", value: stats.total, color: "bg-blue-600" },
-    ...Object.entries(stats.byStatus).map(([k, v]) => ({ label: k, value: v, color: "bg-indigo-500" })),
-  ];
+  const statusCards = Object.entries(stats.byStatus);
 
   return (
     <div className="space-y-6">
+      {/* Top cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {cards.map((c, i) => (
-          <div key={i} className="rounded-xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-            <div className={`inline-block w-2 h-8 rounded mr-3 ${c.color}`} />
-            <span className="text-2xl font-bold">{c.value}</span>
-            <p className="text-xs text-gray-500 mt-1">{c.label}</p>
+        <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700 col-span-2 md:col-span-1">
+          <p className="text-xs text-gray-500 mb-1">Всего записей</p>
+          <p className="text-3xl font-bold text-blue-600">{stats.total}</p>
+        </div>
+        {statusCards.map(([label, value]) => (
+          <div key={label} className="rounded-xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <p className="text-xs text-gray-500 mb-1">{label}</p>
+            <p className="text-2xl font-bold">{value}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <SectionTable title="По сфере" data={stats.bySphere} />
-        <SectionTable title="По циклу" data={stats.byCycle} />
+      {/* By Cycle */}
+      <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+        <h3 className="font-semibold text-sm mb-3">По циклам</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 border-b border-gray-100 dark:border-gray-700">
+                <th className="pb-2 pr-4">Цикл</th>
+                <th className="pb-2 pr-4">Всего</th>
+                <th className="pb-2 pr-4">Исполнено</th>
+                <th className="pb-2 pr-4">В работе</th>
+                <th className="pb-2">Откл.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.byCycle.map(c => (
+                <tr key={c.cycle} className="border-t border-gray-100 dark:border-gray-700">
+                  <td className="py-1.5 pr-4 font-medium">{c.cycle}</td>
+                  <td className="py-1.5 pr-4">{c.total}</td>
+                  <td className="py-1.5 pr-4 text-green-600">{c.done}</td>
+                  <td className="py-1.5 pr-4 text-blue-600">{c.inWork}</td>
+                  <td className="py-1.5 text-red-500">{c.rejected}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function SectionTable({ title, data }: { title: string; data: Record<string, number> }) {
-  return (
-    <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-      <h3 className="font-semibold text-sm mb-3">{title}</h3>
-      <table className="w-full text-sm">
-        <tbody>
-          {Object.entries(data).map(([k, v]) => (
-            <tr key={k} className="border-t border-gray-100 dark:border-gray-700">
-              <td className="py-1 text-gray-600 dark:text-gray-400">{k}</td>
-              <td className="py-1 text-right font-medium">{v}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* By Sphere */}
+      <div className="rounded-xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+        <h3 className="font-semibold text-sm mb-3">По сферам</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 border-b border-gray-100 dark:border-gray-700">
+                <th className="pb-2 pr-4">Сфера</th>
+                <th className="pb-2 pr-4">Всего</th>
+                <th className="pb-2 pr-4">Исполнено</th>
+                <th className="pb-2 pr-4">В работе</th>
+                <th className="pb-2">Откл.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.bySphere.map(s => (
+                <tr key={s.sphere} className="border-t border-gray-100 dark:border-gray-700">
+                  <td className="py-1.5 pr-4">{s.sphere}</td>
+                  <td className="py-1.5 pr-4">{s.count}</td>
+                  <td className="py-1.5 pr-4 text-green-600">{s.done}</td>
+                  <td className="py-1.5 pr-4 text-blue-600">{s.inWork}</td>
+                  <td className="py-1.5 text-red-500">{s.rejected}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
