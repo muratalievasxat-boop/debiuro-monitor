@@ -126,9 +126,9 @@ export const storage = {
             status=EXCLUDED.status, position_2024=EXCLUDED.position_2024,
             position_2026=EXCLUDED.position_2026, adgs_position=EXCLUDED.adgs_position,
             case_note=EXCLUDED.case_note
-        `, [r.id, r.type, r.cycle, r.sphere, r.proposal, r.responsible, r.responsibleAll,
-            r.stakeholders, r.completionForm, r.deadline, r.status, r.position_2024,
-            r.position_2026, r.adgsPosition, r.caseNote]);
+        `, [r.id, r.type, r.cycle, r.sphere, r.proposal, r.responsible, r.responsible_all,
+            r.stakeholders, r.completion_form, r.deadline, r.status, r.position_2024,
+            r.position_2026, r.adgs_position, r.case_note]);
       }
       await client.query('COMMIT');
     } catch (e) {
@@ -195,8 +195,8 @@ export const storage = {
       }
 
       let primaryExec = r.responsible?.trim() || '';
-      if (r.responsibleAll) {
-        try { primaryExec = JSON.parse(r.responsibleAll)[0] || primaryExec; } catch {}
+      if (r.responsible_all) {
+        try { primaryExec = JSON.parse(r.responsible_all)[0] || primaryExec; } catch {}
       }
       if (primaryExec) {
         if (!execMap[primaryExec]) execMap[primaryExec] = { count: 0, done: 0 };
@@ -215,7 +215,7 @@ export const storage = {
       if (typeNorm === 'анализ') { cycleMap[c].totalAnalysis++; if (s === 'Исполнено') cycleMap[c].doneAnalysis++; }
       else if (typeNorm === 'мониторинг') { cycleMap[c].totalMonitoring++; if (s === 'Исполнено') cycleMap[c].doneMonitoring++; }
 
-      const form = normalizeForm(r.completionForm);
+      const form = normalizeForm(r.completion_form);
       if (!formMap[form]) formMap[form] = { total: 0, done: 0 };
       formMap[form].total++;
       if (s === 'Исполнено') formMap[form].done++;

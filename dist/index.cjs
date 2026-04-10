@@ -144,15 +144,15 @@ var storage = {
           r.sphere,
           r.proposal,
           r.responsible,
-          r.responsibleAll,
+          r.responsible_all,
           r.stakeholders,
-          r.completionForm,
+          r.completion_form,
           r.deadline,
           r.status,
           r.position_2024,
           r.position_2026,
-          r.adgsPosition,
-          r.caseNote
+          r.adgs_position,
+          r.case_note
         ]);
       }
       await client.query("COMMIT");
@@ -224,9 +224,9 @@ var storage = {
         else if (s === "\u041D\u0435 \u043F\u043E\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044F") sphereMap[r.sphere].rejected++;
       }
       let primaryExec = r.responsible?.trim() || "";
-      if (r.responsibleAll) {
+      if (r.responsible_all) {
         try {
-          primaryExec = JSON.parse(r.responsibleAll)[0] || primaryExec;
+          primaryExec = JSON.parse(r.responsible_all)[0] || primaryExec;
         } catch {
         }
       }
@@ -250,7 +250,7 @@ var storage = {
         cycleMap[c].totalMonitoring++;
         if (s === "\u0418\u0441\u043F\u043E\u043B\u043D\u0435\u043D\u043E") cycleMap[c].doneMonitoring++;
       }
-      const form = normalizeForm(r.completionForm);
+      const form = normalizeForm(r.completion_form);
       if (!formMap[form]) formMap[form] = { total: 0, done: 0 };
       formMap[form].total++;
       if (s === "\u0418\u0441\u043F\u043E\u043B\u043D\u0435\u043D\u043E") formMap[form].done++;
