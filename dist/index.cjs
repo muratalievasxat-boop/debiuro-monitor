@@ -62,10 +62,10 @@ async function initTables() {
     CREATE TABLE IF NOT EXISTS recommendations (
       id INTEGER PRIMARY KEY,
       type TEXT, cycle TEXT, sphere TEXT, proposal TEXT,
-      responsible TEXT, "responsibleAll" TEXT,
-      stakeholders TEXT, "completionForm" TEXT,
-      deadline TEXT, status TEXT, position2024 TEXT,
-      position2026 TEXT, "adgsPosition" TEXT, "caseNote" TEXT
+      responsible TEXT, responsible_all TEXT,
+      stakeholders TEXT, completion_form TEXT,
+      deadline TEXT, status TEXT, position_2024 TEXT,
+      position_2026 TEXT, adgs_position TEXT, case_note TEXT
     );
     CREATE TABLE IF NOT EXISTS status_history (
       id SERIAL PRIMARY KEY,
@@ -104,7 +104,7 @@ var storage = {
       params.push(filters.type);
     }
     if (filters.responsible) {
-      conditions.push(`(responsible ILIKE $${i} OR "responsibleAll" ILIKE $${i})`);
+      conditions.push(`(responsible ILIKE $${i} OR responsible_all ILIKE $${i})`);
       params.push(`%${filters.responsible}%`);
       i++;
     }
@@ -127,16 +127,16 @@ var storage = {
       await client.query("BEGIN");
       for (const r of rows) {
         await client.query(`
-          INSERT INTO recommendations (id,type,cycle,sphere,proposal,responsible,"responsibleAll",stakeholders,"completionForm",deadline,status,position2024,position2026,"adgsPosition","caseNote")
+          INSERT INTO recommendations (id,type,cycle,sphere,proposal,responsible,responsible_all,stakeholders,completion_form,deadline,status,position_2024,position_2026,adgs_position,case_note)
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
           ON CONFLICT (id) DO UPDATE SET
             type=EXCLUDED.type, cycle=EXCLUDED.cycle, sphere=EXCLUDED.sphere,
             proposal=EXCLUDED.proposal, responsible=EXCLUDED.responsible,
-            "responsibleAll"=EXCLUDED."responsibleAll", stakeholders=EXCLUDED.stakeholders,
-            "completionForm"=EXCLUDED."completionForm", deadline=EXCLUDED.deadline,
-            status=EXCLUDED.status, position2024=EXCLUDED.position2024,
-            position2026=EXCLUDED.position2026, "adgsPosition"=EXCLUDED."adgsPosition",
-            "caseNote"=EXCLUDED."caseNote"
+            responsible_all=EXCLUDED.responsible_all, stakeholders=EXCLUDED.stakeholders,
+            completion_form=EXCLUDED.completion_form, deadline=EXCLUDED.deadline,
+            status=EXCLUDED.status, position_2024=EXCLUDED.position_2024,
+            position_2026=EXCLUDED.position_2026, adgs_position=EXCLUDED.adgs_position,
+            case_note=EXCLUDED.case_note
         `, [
           r.id,
           r.type,
@@ -149,8 +149,8 @@ var storage = {
           r.completionForm,
           r.deadline,
           r.status,
-          r.position2024,
-          r.position2026,
+          r.position_2024,
+          r.position_2026,
           r.adgsPosition,
           r.caseNote
         ]);
@@ -175,18 +175,18 @@ var storage = {
       payload.status,
       old.deadline,
       payload.deadline ?? old.deadline,
-      old.position2026,
-      payload.position2026 ?? old.position2026,
+      old.position_2026,
+      payload.position_2026 ?? old.position_2026,
       payload.changedBy ?? "\u0410\u043D\u043E\u043D\u0438\u043C",
       (/* @__PURE__ */ new Date()).toLocaleString("ru-RU"),
       payload.comment
     ]);
     await pool.query(`
-      UPDATE recommendations SET status=$1, deadline=$2, position2026=$3, "adgsPosition"=$4 WHERE id=$5
+      UPDATE recommendations SET status=$1, deadline=$2, position_2026=$3, adgs_position=$4 WHERE id=$5
     `, [
       payload.status,
       payload.deadline ?? old.deadline,
-      payload.position2026 ?? old.position2026,
+      payload.position_2026 ?? old.position_2026,
       payload.adgsPosition ?? old.adgsPosition,
       id
     ]);
