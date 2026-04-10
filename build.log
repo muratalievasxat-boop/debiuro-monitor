@@ -1,0 +1,41 @@
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+Building Vite client...
+vite v7.3.2 building client environment for production...
+transforming...
+✓ 10 modules transformed.
+✗ Build failed in 198ms
+Build failed: [vite]: Rollup failed to resolve import "react-router-dom" from "/Users/askhat/projects/debiuro-app/client/src/components/Layout.tsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteLog (/Users/askhat/projects/debiuro-app/node_modules/vite/dist/node/chunks/config.js:33639:57)
+    at <anonymous> (/Users/askhat/projects/debiuro-app/node_modules/vite/dist/node/chunks/config.js:33673:73)
+    at onwarn (/Users/askhat/projects/debiuro-app/node_modules/@vitejs/plugin-react/dist/index.js:90:7)
+    at <anonymous> (/Users/askhat/projects/debiuro-app/node_modules/vite/dist/node/chunks/config.js:33673:28)
+    at onRollupLog (/Users/askhat/projects/debiuro-app/node_modules/vite/dist/node/chunks/config.js:33668:63)
+    at onLog (/Users/askhat/projects/debiuro-app/node_modules/vite/dist/node/chunks/config.js:33471:4)
+    at <anonymous> (/Users/askhat/projects/debiuro-app/node_modules/rollup/dist/es/shared/node-entry.js:21369:32)
+    at Object.logger (/Users/askhat/projects/debiuro-app/node_modules/rollup/dist/es/shared/node-entry.js:23364:9)
+    at ModuleLoader.handleInvalidResolvedId (/Users/askhat/projects/debiuro-app/node_modules/rollup/dist/es/shared/node-entry.js:22108:26)
+    at <anonymous> (/Users/askhat/projects/debiuro-app/node_modules/rollup/dist/es/shared/node-entry.js:22066:26) {
+  watchFiles: [
+    '/Users/askhat/projects/debiuro-app/client/index.html',
+    '/Users/askhat/projects/debiuro-app/client/src/main.tsx',
+    '/Users/askhat/projects/debiuro-app/package.json',
+    '/Users/askhat/projects/debiuro-app/node_modules/react/jsx-runtime.js',
+    '/Users/askhat/projects/debiuro-app/node_modules/react/index.js',
+    '/Users/askhat/projects/debiuro-app/node_modules/react-dom/client.js',
+    '/Users/askhat/projects/debiuro-app/node_modules/@tanstack/react-query/build/modern/index.js',
+    '/Users/askhat/projects/debiuro-app/node_modules/wouter/src/index.js',
+    '/Users/askhat/projects/debiuro-app/client/src/pages/DashboardPage.tsx',
+    '/Users/askhat/projects/debiuro-app/client/src/components/Layout.tsx',
+    '/Users/askhat/projects/debiuro-app/client/src/pages/UpdatePage.tsx',
+    '/Users/askhat/projects/debiuro-app/client/src/pages/RegistryPage.tsx',
+    '/Users/askhat/projects/debiuro-app/client/src/globals.css',
+    '/Users/askhat/projects/debiuro-app/node_modules/tailwindcss/index.css',
+    '/Users/askhat/projects/debiuro-app/client/src/pages/ExportPage.tsx'
+  ]
+}
