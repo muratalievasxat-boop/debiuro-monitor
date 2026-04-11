@@ -1,21 +1,26 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import Registry from "./pages/Registry";
+import DashboardPage from "./pages/DashboardPage";
+import RegistryPage from "./pages/RegistryPage";
+import HistoryPage from "./pages/UpdatePage";
 import ExportPage from "./pages/ExportPage";
-import NotFound from "./pages/NotFound";
+
+const queryClient = new QueryClient();
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="registry" element={<Registry />} />
-          <Route path="export" element={<ExportPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="registry" element={<RegistryPage />} />
+            <Route path="history" element={<HistoryPage />} />
+            <Route path="export" element={<ExportPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
