@@ -6,11 +6,12 @@ import {
   CategoryScale, LinearScale, Tooltip, Legend, Title, BubbleController
 } from "chart.js";
 import { Bar, Line, Bubble } from "react-chartjs-2";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import { CheckCircle2, Clock, XCircle, AlertCircle, Hash, AlertTriangle } from "lucide-react";
 
 ChartJS.register(
   ArcElement, BarElement, LineElement, PointElement, BubbleController,
-  CategoryScale, LinearScale, Tooltip, Legend, Title
+  CategoryScale, LinearScale, Tooltip, Legend, Title, ChartDataLabels
 );
 
 interface Stats {
@@ -76,24 +77,24 @@ export default function DashboardPage() {
 
   // Sphere chart — filtered by active KPI
   const sphereChartData = useMemo(() => {
-    const labels = bySphere.map(s => s.sphere);
-    let values: number[];
-    if (!activeFilter || activeFilter === "Просроченные") {
-      values = bySphere.map(s => s.count);
+    let pairs: { label: string; value: number }[];
+    if (!activeFilter || activeFilter === "Просроченные" || activeFilter === "__all__") {
+      pairs = bySphere.map(s => ({ label: s.sphere, value: s.count }));
     } else if (activeFilter === "Исполнено") {
-      values = bySphere.map(s => s.done);
+      pairs = bySphere.map(s => ({ label: s.sphere, value: s.done }));
     } else if (activeFilter === "В работе") {
-      values = bySphere.map(s => s.inWork);
+      pairs = bySphere.map(s => ({ label: s.sphere, value: s.inWork }));
     } else if (activeFilter === "Не поддерживается") {
-      values = bySphere.map(s => s.rejected);
+      pairs = bySphere.map(s => ({ label: s.sphere, value: s.rejected }));
     } else {
-      values = bySphere.map(s => s.count - s.done - s.inWork - s.rejected);
+      pairs = bySphere.map(s => ({ label: s.sphere, value: s.count - s.done - s.inWork - s.rejected }));
     }
+    pairs.sort((a, b) => b.value - a.value);
     return {
-      labels,
+      labels: pairs.map(p => p.label),
       datasets: [{
-        label: activeFilter ? `Сфера (${activeFilter})` : "Всего",
-        data: values,
+        label: activeFilter && activeFilter !== "__all__" ? `Сфера (${activeFilter})` : "Всего",
+        data: pairs.map(p => p.value),
         backgroundColor: activeFilter === "Исполнено" ? "#16a34a"
           : activeFilter === "В работе" ? "#d97706"
           : activeFilter === "Не поддерживается" ? "#dc2626"
@@ -104,20 +105,21 @@ export default function DashboardPage() {
 
   // Exec chart — filtered
   const execChartData = useMemo(() => {
-    const sorted = [...byExec].slice(0, 10);
-    let values: number[];
-    if (!activeFilter || activeFilter === "Просроченные") {
-      values = sorted.map(e => e.count);
+    let pairs: { label: string; value: number }[];
+    if (!activeFilter || activeFilter === "Просроченные" || activeFilter === "__all__") {
+      pairs = [...byExec].map(e => ({ label: e.responsible, value: e.count }));
     } else if (activeFilter === "Исполнено") {
-      values = sorted.map(e => e.done);
+      pairs = [...byExec].map(e => ({ label: e.responsible, value: e.done }));
     } else {
-      values = sorted.map(e => e.count);
+      pairs = [...byExec].map(e => ({ label: e.responsible, value: e.count }));
     }
+    pairs.sort((a, b) => b.value - a.value);
+    pairs = pairs.slice(0, 10);
     return {
-      labels: sorted.map(e => e.responsible),
+      labels: pairs.map(p => p.label),
       datasets: [{
-        label: activeFilter ? `Исполнитель (${activeFilter})` : "Всего",
-        data: values,
+        label: activeFilter && activeFilter !== "__all__" ? `Исполнитель (${activeFilter})` : "Всего",
+        data: pairs.map(p => p.value),
         backgroundColor: activeFilter === "Исполнено" ? "#16a34a"
           : activeFilter === "В работе" ? "#d97706"
           : activeFilter === "Не поддерживается" ? "#dc2626"
@@ -219,6 +221,7 @@ export default function DashboardPage() {
   const noStatus = total - done - inWork - rejected;
 
   function handleKpi(label: string) {
+    if (label === "__all__") { setActiveFilter(null); return; }
     setActiveFilter(prev => prev === label ? null : label);
   }
 
@@ -269,9 +272,21 @@ export default function DashboardPage() {
     responsive: true, maintainAspectRatio: false,
     scales: {
       x: { stacked, ticks: { color: textColor(), font: { size: 11 } } },
-      y: { stacked, ticks: { color: textColor(), font: { size: 11 } } }
+      y: { stacked, ticks: { color: textColor(), font: { size: 11 }, maxTicksLimit: 20 } }
     },
-    plugins: { legend: { display: stacked, labels: { color: textColor(), font: { size: 11 } } } }
+    plugins: {
+      legend: { display: stacked, labels: { color: textColor(), font: { size: 11 } } },
+      datalabels: {
+        display: !stacked,
+        anchor: "end" as const,
+        align: "end" as const,
+        color: textColor(),
+        font: { size: 10, weight: "bold" as const },
+        formatter: (v: number) => v > 0 ? v : "",
+        clip: false,
+      }
+    },
+    layout: { padding: { right: 32 } },
   });
 
   // Outsiders — exec with 0% completion and ≥10 recs
@@ -281,7 +296,7 @@ export default function DashboardPage() {
   const overdueExecData = overdueByExec?.slice(0, 8) ?? [];
 
   const kpis = [
-    { label: "Всего",              value: total,    sub: "7 циклов",               color: "#2563eb", icon: Hash,          key: null },
+    { label: "Всего",              value: total,    sub: "7 циклов",               color: "#2563eb", icon: Hash,          key: "__all__" },
     { label: "Исполнено",          value: done,     sub: `${pct(done,total)}%`,    color: "#16a34a", icon: CheckCircle2,  key: "Исполнено" },
     { label: "В работе",           value: inWork,   sub: `${pct(inWork,total)}%`,  color: "#d97706", icon: Clock,         key: "В работе" },
     { label: "Не поддерживается",  value: rejected, sub: `${pct(rejected,total)}%`,color: "#dc2626", icon: XCircle,       key: "Не поддерживается" },
@@ -299,8 +314,8 @@ export default function DashboardPage() {
             key={k.label}
             label={k.label} value={k.value} sub={k.sub}
             color={k.color} icon={k.icon}
-            active={activeFilter === k.key && k.key !== null}
-            onClick={() => k.key && handleKpi(k.key)}
+            active={k.key === "__all__" ? activeFilter === null : activeFilter === k.key}
+            onClick={() => handleKpi(k.key ?? "__all__")}
           />
         ))}
       </div>
