@@ -7,8 +7,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function runBuild() {
-  console.log("Building Vite client...");
-  await viteBuild();
+  if (process.env.SKIP_VITE_BUILD === "true") {
+    console.log("Skipping Vite client build (SKIP_VITE_BUILD=true)...");
+  } else {
+    console.log("Building Vite client...");
+    await viteBuild();
+  }
 
   console.log("Building Express server...");
   await esbuildBuild({
