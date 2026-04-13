@@ -62,6 +62,7 @@ export default function RegistryPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["/api/recommendations", page, search, cycle, status, sphere, type, sortKey, sortDir],
     queryFn: () => apiRequest("GET", `/api/recommendations?${params}`).then(r => r.json()),
+    placeholderData: (previousData) => previousData,
   });
 
   const { data: metaData } = useQuery({
@@ -219,7 +220,7 @@ export default function RegistryPage() {
 
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={closeModal}>
-          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10">
               <h2 className="font-semibold text-base">Рекомендация № {modal.id}</h2>
               <button onClick={closeModal} className="p-1.5 rounded hover:bg-muted"><X size={18} /></button>

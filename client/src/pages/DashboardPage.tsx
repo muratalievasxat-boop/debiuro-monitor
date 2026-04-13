@@ -35,22 +35,27 @@ function KpiCard({ label, value, sub, color, icon: Icon, active, onClick }: any)
   return (
     <div
       onClick={onClick}
-      className={`
-        bg-card border rounded-xl p-4 flex flex-col gap-1 relative overflow-hidden cursor-pointer
-        transition-all duration-150 select-none
-        ${active ? "ring-2 ring-offset-1 shadow-md scale-[1.02]" : "hover:shadow-md hover:scale-[1.01]"}
+      className={`bg-card border rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden cursor-pointer
+        transition-all duration-150 select-none hover:shadow-md hover:scale-[1.02]
+        ${active ? 'ring-2 ring-offset-1 shadow-md scale-[1.02]' : 'border-border hover:border-foreground'}
       `}
-      style={{ borderColor: active ? color : undefined }}
+      style={{ borderColor: active ? color : undefined, backgroundColor: active ? `${color}10` : undefined }}
     >
       <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: color }} />
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide leading-tight">{label}</span>
+      <div className="flex items-center justify-between">
         <Icon size={15} style={{ color }} />
       </div>
-      <span className="text-3xl font-bold tabular-nums leading-none">{typeof value === 'number' ? value.toLocaleString('ru') : value}</span>
-      <span className="text-xs text-muted-foreground">{sub}</span>
+      <div>
+        <p className="text-[11px] font-semibold text-primary uppercase tracking-wide leading-tight">{label}</p>
+      </div>
+      <div>
+        <span className="text-3xl font-bold tabular-nums leading-none">{typeof value === 'number' ? value.toLocaleString('ru') : value}</span>
+        <span className="text-xs text-muted-foreground ml-2">{sub}</span>
+      </div>
       {active && (
-        <span className="absolute bottom-1.5 right-2 text-[10px] font-semibold" style={{ color }}>● фильтр активен</span>
+        <div className="text-[10px] text-muted-foreground">
+          ● фильтр активен
+        </div>
       )}
     </div>
   );
@@ -295,142 +300,4 @@ export default function DashboardPage() {
   // Overdue by exec (top 8)
   const overdueExecData = overdueByExec?.slice(0, 8) ?? [];
 
-  const kpis = [
-    { label: "Всего",              value: total,    sub: "7 циклов",               color: "#2563eb", icon: Hash,          key: "__all__" },
-    { label: "Исполнено",          value: done,     sub: `${pct(done,total)}%`,    color: "#16a34a", icon: CheckCircle2,  key: "Исполнено" },
-    { label: "В работе",           value: inWork,   sub: `${pct(inWork,total)}%`,  color: "#d97706", icon: Clock,         key: "В работе" },
-    { label: "Не поддерживается",  value: rejected, sub: `${pct(rejected,total)}%`,color: "#dc2626", icon: XCircle,       key: "Не поддерживается" },
-    { label: "Без статуса",        value: noStatus, sub: `${pct(noStatus,total)}%`,color: "#9ca3af", icon: AlertCircle,   key: "Без статуса" },
-    { label: "Просроченные",       value: overdue ?? 0, sub: "срок прошёл, не исп.", color: "#7c3aed", icon: AlertTriangle, key: "Просроченные" },
-  ];
-
-  return (
-    <div className="p-5 space-y-5">
-
-      {/* KPIs */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
-        {kpis.map(k => (
-          <KpiCard
-            key={k.label}
-            label={k.label} value={k.value} sub={k.sub}
-            color={k.color} icon={k.icon}
-            active={k.key === "__all__" ? activeFilter === null : activeFilter === k.key}
-            onClick={() => handleKpi(k.key ?? "__all__")}
-          />
-        ))}
-      </div>
-
-      {activeFilter && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Фильтр активен: <strong className="text-foreground">{activeFilter}</strong></span>
-          <button onClick={() => setActiveFilter(null)}
-            className="text-xs px-2 py-0.5 rounded border border-border hover:bg-muted">✕ Сбросить</button>
-        </div>
-      )}
-
-      {/* Row 1: Динамика по циклам + Топ сфер */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-sm font-semibold mb-1">% исполнения по циклам</p>
-          <p className="text-xs text-muted-foreground mb-3">Анализ vs Мониторинг — динамика от цикла к циклу</p>
-          <div className="h-56"><Line data={cycleLineData} options={lineOpts} /></div>
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-sm font-semibold mb-1">
-            Топ-15 сфер
-            {activeFilter && <span className="ml-2 text-xs font-normal text-muted-foreground">→ {activeFilter}</span>}
-          </p>
-          <div className="h-56">
-            <Bar data={sphereChartData} options={hbarOpts(false)} />
-          </div>
-        </div>
-      </div>
-
-      {/* Row 2: Форма завершения — переключатель бар/пузыри */}
-      <div className="bg-card border border-border rounded-xl p-4">
-        <div className="flex items-center justify-between mb-1">
-          <div>
-            <p className="text-sm font-semibold">Эффективность по форме завершения</p>
-            <p className="text-xs text-muted-foreground">Как уровень адресата влияет на % исполнения</p>
-          </div>
-          <div className="flex gap-1">
-            <button
-              onClick={() => setFormView("bar")}
-              className={`text-xs px-3 py-1 rounded border transition-colors ${formView === "bar" ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}
-            >Бар</button>
-            <button
-              onClick={() => setFormView("bubble")}
-              className={`text-xs px-3 py-1 rounded border transition-colors ${formView === "bubble" ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted"}`}
-            >Пузыри</button>
-          </div>
-        </div>
-        <div className="h-64">
-          {formView === "bar"
-            ? <Bar data={formBarData} options={hbarOpts(true)} />
-            : <Bubble data={bubbleData} options={bubbleOpts} />
-          }
-        </div>
-        {formView === "bubble" && (
-          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full inline-block bg-green-600" /> ≥50% исполнено</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full inline-block bg-amber-500" /> 30–49%</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full inline-block bg-red-600" /> &lt;30%</span>
-          </div>
-        )}
-      </div>
-
-      {/* Row 3: Топ исполнителей + Просроченные */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-sm font-semibold mb-1">
-            Топ-10 исполнителей
-            {activeFilter && <span className="ml-2 text-xs font-normal text-muted-foreground">→ {activeFilter}</span>}
-          </p>
-          <div className="h-52"><Bar data={execChartData} options={hbarOpts(false)} /></div>
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-4">
-          <p className="text-sm font-semibold mb-1">Просроченные по исполнителям</p>
-          <p className="text-xs text-muted-foreground mb-3">Срок истёк в 2024–2025, статус — «В работе»</p>
-          {overdueExecData.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Нет данных</p>
-          ) : (
-            <div className="space-y-2">
-              {overdueExecData.map(e => (
-                <div key={e.responsible} className="flex items-center gap-2">
-                  <span className="text-xs font-medium w-20 truncate flex-shrink-0">{e.responsible}</span>
-                  <div className="flex-1 h-5 bg-muted rounded-sm overflow-hidden">
-                    <div className="h-full bg-red-500 rounded-sm transition-all"
-                      style={{ width: `${Math.min(100, (e.count / overdueExecData[0].count) * 100)}%` }} />
-                  </div>
-                  <span className="text-xs font-bold text-red-600 w-6 text-right">{e.count}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Row 4: Аутсайдеры (0% исполнения) */}
-      {outsiders.length > 0 && (
-        <div className="bg-card border border-red-200 dark:border-red-900/40 rounded-xl p-4">
-          <p className="text-sm font-semibold mb-1 text-red-700 dark:text-red-400">
-            Аутсайдеры — 0% исполнения (≥10 рекомендаций)
-          </p>
-          <p className="text-xs text-muted-foreground mb-3">Исполнители у которых ни одна рекомендация не выполнена</p>
-          <div className="flex flex-wrap gap-2">
-            {outsiders.map(e => (
-              <div key={e.responsible}
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <span className="text-xs font-semibold text-red-700 dark:text-red-400">{e.responsible}</span>
-                <span className="text-xs text-red-500">{e.count} рек.</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-    </div>
-  );
-}
+  const kpis = 
