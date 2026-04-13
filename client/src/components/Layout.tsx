@@ -1,67 +1,71 @@
-import { useState } from "react";
-import { Outlet, NavLink } from "react-router-dom";
-import { Menu, X, Moon, Sun, LayoutDashboard, Table2, FileDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
+import { Menu, X, Moon, Sun, LayoutDashboard, Table2, FileDown, ClipboardEdit } from "lucide-react";
 
-export default function Layout() {
+const navItems = [
+  { to: "/", label: "Дашборд", icon: LayoutDashboard },
+  { to: "/registry", label: "Реестр", icon: Table2 },
+  { to: "/update", label: "История статусов", icon: ClipboardEdit },
+  { to: "/export", label: "Экспорт в Excel", icon: FileDown },
+];
+
+export default function Layout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(() =>
+    localStorage.getItem("theme") === "dark" ||
+    (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches)
+  );
+  const [location] = useLocation();
 
-  const toggle = () => {
-    setDark(!dark);
-    document.documentElement.classList.toggle("dark");
-  };
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [dark]);
 
-  const navItems = [
-    { to: "/", label: "Дашборд", icon: <LayoutDashboard size={18} /> },
-    { to: "/registry", label: "Реестр", icon: <Table2 size={18} /> },
-    { to: "/export", label: "Экспорт в Excel", icon: <FileDown size={18} /> },
-  ];
+  const currentLabel = navItems.find(n =>
+    n.to === "/" ? location === "/" : location.startsWith(n.to)
+  )?.label ?? "Дашборд";
 
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100`}>
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-4 h-12 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="flex items-center justify-between px-4 h-12 bg-card border-b border-border">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-1.5 rounded hover:bg-muted transition-colors">
           {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
-        <span className="font-semibold text-sm">
-          {navItems.find(n => location.pathname === n.to || (n.to !== "/" && location.pathname.startsWith(n.to)))?.label ?? "Дашборд"}
-        </span>
-        <button onClick={toggle} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+        <span className="font-semibold text-sm">{currentLabel}</span>
+        <button onClick={() => setDark(d => !d)}
+          className="p-1.5 rounded hover:bg-muted transition-colors">
           {dark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
         {sidebarOpen && (
-          <aside className="w-56 min-h-[calc(100vh-3rem)] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-3">
+          <aside className="w-56 min-h-[calc(100vh-3rem)] bg-card border-r border-border p-3 shrink-0">
             <nav className="flex flex-col gap-1">
-              {navItems.map(item => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/"}
-                  onClick={() => setSidebarOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-colors ${
-                      isActive
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    }`
-                  }
-                >
-                  {item.icon}
-                  {item.label}
-                </NavLink>
-              ))}
+              {navItems.map(item => {
+                const isActive = item.to === "/" ? location === "/" : location.startsWith(item.to);
+                return (
+                  <Link key={item.to} href={item.to}
+                    onClick={() => setSidebarOpen(false)}
+                    className={"flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-colors " +
+                      (isActive ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted")}>
+                    <item.icon size={18} />
+                    {item.label}
+                  </Link>
+                );
+              })}
             </nav>
           </aside>
         )}
-
-        {/* Main content */}
-        <main className="flex-1 p-4">
-          <Outlet />
+        <main className="flex-1 min-w-0">
+          {children}
         </main>
       </div>
     </div>
